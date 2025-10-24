@@ -1,0 +1,22 @@
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Total Time in Month</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let e of employees" [ngClass]="{'red-row' :e.hours_worked<100}">
+            <td>
+                {{e.name}}
+            </td>
+            <td>
+                {{e.hours_worked}}
+            </td>
+            <td>
+                Edit
+            </td>
+        </tr>
+    </tbody>
+</table>
