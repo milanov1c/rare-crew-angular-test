@@ -15,55 +15,42 @@ export class EmployeeService {
     return this.http.get<any[]>(`${url}/${endpoint}?code=${key}`);
   }
 
+  private isValidEntry(e: any): boolean {
+    const employeeName = e.EmployeeName?.trim();
+    if (e.DeletedOn !== null) return false;
+    if (!employeeName) return false;
+    if (!e.StarTimeUtc || !e.EndTimeUtc) return false;
+
+    const startTime = new Date(e.StarTimeUtc);
+    const endTime = new Date(e.EndTimeUtc);
+    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) return false;
+    if (startTime >= endTime) return false;
+
+    const hours = (endTime.getTime() - startTime.getTime()) / 3600000;
+    if (hours <= 0) return false;
+
+    return true;
+  }
+
   getEmployeesWithHours(data: any[]): Employee[] {
     const employeeMap = new Map<string, number>();
 
     data.forEach((e) => {
-      const employeeName = e.EmployeeName?.trim();
+      if (!this.isValidEntry(e)) return;
+
+      const name = e.EmployeeName!.trim();
       const startTime = new Date(e.StarTimeUtc);
       const endTime = new Date(e.EndTimeUtc);
-
-      if (e.DeletedOn !== null) {
-        console.error(`Employee ${employeeName || e.Id} is deleted.`);
-        return;
-      }
-
-      if (!employeeName) {
-        console.error(`Employee ${e.Id} doesn't have a name.`);
-        return;
-      }
-
-      if (
-        isNaN(startTime.getTime()) ||
-        isNaN(endTime.getTime())
-      ) {
-        console.error(`${employeeName} has invalid start or end time`);
-        return;
-      }
-      
-
       const hours = (endTime.getTime() - startTime.getTime()) / 3600000;
 
-      if (hours <= 0) {
-        console.error(`Employee ${employeeName} has negative working hours`);
-        return;
-      }
-
-      if (employeeMap.has(employeeName)) {
-        employeeMap.set(employeeName, employeeMap.get(employeeName)! + hours);
-      } else {
-        employeeMap.set(employeeName, hours);
-      }
+      employeeMap.set(name, (employeeMap.get(name) || 0) + hours);
     });
 
-    const employees: Employee[] = Array.from(
-      employeeMap,
-      ([name, hours_worked]) => ({
-        name,
-        hours_worked: Math.floor(hours_worked),
-        is_deleted: false,
-      })
-    ).sort((a, b) => b.hours_worked - a.hours_worked);
+    const employees: Employee[] = Array.from(employeeMap, ([name, hours_worked]) => ({
+      name,
+      hours_worked: Math.floor(hours_worked),
+      is_deleted: false,
+    })).sort((a, b) => b.hours_worked - a.hours_worked);
 
     return employees;
   }
