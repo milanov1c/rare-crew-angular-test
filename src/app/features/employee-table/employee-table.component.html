@@ -1,4 +1,4 @@
-<table>
+<table *ngIf="employees.length">
     <thead>
         <tr>
             <th>Name</th>
@@ -20,3 +20,6 @@
         </tr>
     </tbody>
 </table>
+<div *ngIf="!employees.length">
+    <p>No employees found</p>
+</div>
